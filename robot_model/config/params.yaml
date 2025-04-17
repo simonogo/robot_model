@@ -1,0 +1,191 @@
+controller_server:
+  ros__parameters:
+    controller_frequency: 25.0
+    costmap_update_timeout: 0.30
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.3
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"] 
+    controller_plugins: ["FollowPath"]
+    use_realtime_priority: false
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+    general_goal_checker:
+      stateful: True
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 0.35
+    FollowPath:
+      plugin: "nav2_mppi_controller::MPPIController"
+      transform_tolerance: 0.2 
+      time_steps: 40
+      model_dt: 0.05
+      batch_size: 2000
+      ax_max: 3.0
+      ax_min: -3.0
+      ay_max: 3.0
+      az_max: 3.5
+      vx_std: 0.2
+      vy_std: 0.2
+      wz_std: 0.4
+      vx_max: 0.5
+      vx_min: -0.35
+      vy_max: 0.5
+      wz_max: 0.1
+      iteration_count: 1
+      prune_distance: 1.7
+      temperature: 0.3
+      gamma: 0.015
+      motion_model: "DiffDrive"
+      visualize: true
+      regenerate_noises: true
+      TrajectoryVisualizer:
+        trajectory_step: 5
+        time_step: 3
+      AckermannConstraints:
+        min_turning_r: 0.2
+      critics: [
+        "ConstraintCritic", "CostCritic", "GoalCritic",
+        "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
+        "PathAngleCritic", "PreferForwardCritic"]
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      PreferForwardCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 10.0
+        threshold_to_consider: 0.3
+      CostCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 10.0
+        critical_cost: 100.0
+        consider_footprint: true
+        collision_cost: 1000000.0
+        near_goal_distance: 1.2
+        trajectory_point_step: 2
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 25.0
+        max_path_occupancy_ratio: 0.01
+        trajectory_point_step: 5
+        threshold_to_consider: 0.5
+        offset_from_furthest: 30
+        use_path_orientations: false
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 5
+        threshold_to_consider: 1.4
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+        offset_from_furthest: 5
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 0.8
+        mode: 0
+
+planner_server:
+  ros__parameters:
+    plugins: ["GridBased"]
+    use_sim_time: True
+    lethal_cost_threshold: 254 
+    xy_goal_tolerance: 0.005  
+    yaw_goal_tolerance: 0.002  
+
+      
+ekf_filter_node:
+  ros__parameters:
+    frequency: 50.0  
+    two_d_mode: true  
+    sensor_timeout: 0.1  
+    odom_frame: odom  
+    base_link_frame: base_link  
+    imu0: /imu/data  
+    imu0_differential: true 
+    odom0_differential: true  
+    imu0_config: [false, false, false, true, true, true, false, false, false, true, true, true, false] 
+
+
+robot_speed_limits:
+  ros__parameters:
+    max_linear_velocity: 
+    max_angular_velocity: 
+
+
+local_costmap:
+  ros__parameters:
+    robot_radius: 0.4
+    inflation_layer:
+      inflation_radius: 
+      cost_scaling_factor: 6.0 
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      track_unknown_space: true  
+      always_send_full_costmap: true  
+      width: 50   
+      height: 50  
+      global_costmap:
+      global_frame: map
+      robot_base_frame: base_link
+      plugins: ["static_layer", "obstacle_layer","inflation_layer"]
+      update_frequency: 5.0  
+      publish_frequency: 5.0 
+      robot_radius: 0.4
+
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        enabled: true  
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true  
+        track_unknown_space: true  
+        combination_method: 1  
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        inflation_radius: 0.9
+        cost_scaling_factor: 6.0
+
+      one_way_layer:
+        plugin: "one_way_layer::OneWayLayer" 
+        enabled: true
+
+local_planner:
+  ros__parameters:
+    loop_frequency: 30.0 
+
+dwb_controller:
+  ros__parameters:
+    trajectory_generator_name: "dwb_plugins::StandardTrajectoryGenerator"
+    min_x_velocity: 0.1   
+    max_x_velocity: 0.5  
+    min_theta_velocity: 0.0  
+    max_theta_velocity: 0.1 
+    vy_samples: 0    
+    vtheta_samples: 0  
+    vx_samples: 50    
+    max_trans_vel_x: 0.5  
